@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TasmotaSharp", "TasmotaSharp\TasmotaSharp.csproj", "{D19B3936-68D6-4922-9847-D3152221A255}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TasmotaSharpTester", "TasmotaSharpTester\TasmotaSharpTester.csproj", "{03BA8DB4-C396-4F79-96F5-27549120634F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D19B3936-68D6-4922-9847-D3152221A255}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D19B3936-68D6-4922-9847-D3152221A255}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D19B3936-68D6-4922-9847-D3152221A255}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D19B3936-68D6-4922-9847-D3152221A255}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03BA8DB4-C396-4F79-96F5-27549120634F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03BA8DB4-C396-4F79-96F5-27549120634F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03BA8DB4-C396-4F79-96F5-27549120634F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03BA8DB4-C396-4F79-96F5-27549120634F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
