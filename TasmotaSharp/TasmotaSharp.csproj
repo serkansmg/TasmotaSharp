@@ -6,6 +6,15 @@
         <Nullable>enable</Nullable>
         <AssemblyName>TasmotaSharp</AssemblyName>
         <RootNamespace>TasmotaSharp</RootNamespace>
+        <PackageId>TasmotaSharp</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Serkan Polat</Authors>
+        <Company>SMG Multimedya ve Proje Hizmetleri A.Ş.</Company>
+        <Description>Lightweight C# HTTP client for Tasmota devices (ESP32/ESP8266) using the REST API</Description>
+
+        <!-- Generate NuGet package on build -->
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Configurations>Debug;Release;</Configurations>
     </PropertyGroup>
 
 </Project>
