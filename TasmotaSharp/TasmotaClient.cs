@@ -92,6 +92,24 @@ public class TasmotaClient : IDisposable
         _baseUrl = $"{_rootUrl}/cm?cmnd=";
     }
 
+    public TasmotaClient(
+        ILogger<TasmotaClient>? logger = null,
+        IHttpClientFactory? httpClientFactory = null)
+    {
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
+
+        if (_httpClientFactory is null)
+        {
+            _fallbackHttp = new HttpClient(new SocketsHttpHandler
+                {
+                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                    PooledConnectionLifetime = TimeSpan.FromMinutes(5)
+                })
+                { Timeout = TimeSpan.FromSeconds(15) };
+        }
+       
+    }
     /// <summary>Convenience overload that matches the original API.</summary>
     public TasmotaClient(string ipAddress) : this(ipAddress, logger: null, httpClientFactory: null) { }
 
