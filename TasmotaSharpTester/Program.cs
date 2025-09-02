@@ -1,11 +1,40 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using TasmotaSharp;
 using TasmotaSharp.Models;
 
 Console.WriteLine("Hello, World!");
+var builder = new HostApplicationBuilder(args);
 
-var client = new TasmotaClient("10.0.4.41");
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithMachineName()
+    .Enrich.WithProperty("Application", "ConsoleApp")
+    .WriteTo.Console(
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File(
+        "logs/consoleapp-.txt",
+        outputTemplate:
+        "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
+        rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(Log.Logger);
+
+builder.Services.AddSingleton<TasmotaClient>();
+builder.Services.AddHttpClient();
+var app = builder.Build();
+
+var scope = app.Services.CreateScope();
+var client = scope.ServiceProvider.GetRequiredService<TasmotaClient>();
+
+client.SetIp("10.0.4.41");
 
 var sensorstatus = await client.GetSensorStatusAsync();
 
@@ -88,3 +117,4 @@ await client.SetTimerMultiAsync(
 );
 Console.WriteLine("Röle 1 açıldı.");
 
+await app.RunAsync();

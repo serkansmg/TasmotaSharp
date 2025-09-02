@@ -8,28 +8,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="40c77a4d-623a-4174-b9d0-f4e26dca9ecd" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.TasmotaSharpSolution/.idea/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.TasmotaSharpSolution/.idea/.name" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.TasmotaSharpSolution/.idea/AndroidProjectSystem.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.TasmotaSharpSolution/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.TasmotaSharpSolution/.idea/indexLayout.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.TasmotaSharpSolution/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.TasmotaTest/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.TasmotaTest/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharp/Models/MultiScheduleStrategy.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharp/Models/RuleInfo.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharp/Models/SimpleRule.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharp/Models/TasmotaSensorStatus.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharp/Models/TasmotaStatus.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharp/Models/WifiScanResult.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharp/README.extended.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharp/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharp/TasmotaClient.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharp/TasmotaSharp.csproj" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharpSolution.sln" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharpTester/Program.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharpTester/TasmotaSharpTester.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/TasmotaSharp/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/TasmotaSharpTester/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.TasmotaTest/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TasmotaTest/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TasmotaSharp/Models/SimpleRule.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TasmotaSharp/Models/SimpleRule.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TasmotaSharp/Models/TasmotaStatus.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TasmotaSharp/Models/TasmotaStatus.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TasmotaSharp/TasmotaClient.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TasmotaSharp/TasmotaClient.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TasmotaSharp/TasmotaSharp.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/TasmotaSharp/TasmotaSharp.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TasmotaSharpTester/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TasmotaSharpTester/Program.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TasmotaSharpTester/TasmotaSharpTester.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/TasmotaSharpTester/TasmotaSharpTester.csproj" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -123,8 +110,33 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1756733462426</updated>
-      <workItem from="1756733463527" duration="11904000" />
+      <workItem from="1756733463527" duration="13108000" />
     </task>
+    <task id="LOCAL-00001" summary="Add initial project files and models for TasmotaSharp client">
+      <option name="closed" value="true" />
+      <created>1756801202822</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1756801202822</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Add README files for TasmotaSharp client with installation instructions, features, and usage examples">
+      <option name="closed" value="true" />
+      <created>1756801280157</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1756801280157</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Add project metadata and NuGet package configuration for TasmotaSharp client">
+      <option name="closed" value="true" />
+      <created>1756801478041</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1756801478041</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -134,6 +146,10 @@
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+    <MESSAGE value="Add initial project files and models for TasmotaSharp client" />
+    <MESSAGE value="Add README files for TasmotaSharp client with installation instructions, features, and usage examples" />
+    <MESSAGE value="Add project metadata and NuGet package configuration for TasmotaSharp client" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add project metadata and NuGet package configuration for TasmotaSharp client" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -155,10 +171,10 @@
           <line>87</line>
           <properties documentPath="$PROJECT_DIR$/ConsoleApp1/Program.cs" containingFunctionPresentation="">
             <startOffsets>
-              <option value="2766" />
+              <option value="3816" />
             </startOffsets>
             <endOffsets>
-              <option value="2802" />
+              <option value="3852" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="4" />

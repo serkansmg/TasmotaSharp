@@ -1,3 +1,5 @@
+using System;
+
 namespace TasmotaSharp.Models;
 /// <summary>Simple, structured rule types that compile into Tasmota rule scripts.</summary>
 public enum SimpleRuleType

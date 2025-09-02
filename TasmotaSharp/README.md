@@ -26,7 +26,7 @@ Provides convenient wrappers for **relays, time/zone, Wi-Fi, MQTT, timers, rules
 Add the project/class to your solution or pack it into a NuGet you control.
 
 ```bash
-dotnet add package Your.TasmotaSharp  # (if you publish it)
+dotnet add package TasmotaSharp  
 ```
 
 > Targets: .NET 6+ recommended.

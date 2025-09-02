@@ -1,18 +1,29 @@
-# TasmotaSharp – README
+ 
 
-A lightweight **HTTP-based Tasmota client** for .NET. Wraps Tasmota’s `/cm?cmnd=` API with pleasant, typed async methods for **relays**, **timers**, **rules**, **time/zone/DST**, **Wi-Fi**, **MQTT**, **sensor reads**, **backup/restore**, and more.
+ 
+# TasmotaSharp
+
+A lightweight **HTTP-based Tasmota client** for .NET.  
+Wraps Tasmota’s `/cm?cmnd=` API with typed async methods for **relays**, **timers**, **rules**, **time/zone/DST**, **Wi-Fi**, **MQTT**, **sensors**, **geo**, **LEDs**, **backup/restore**, and more.
 
 ---
 
 ## Installation
 
-Just drop the single file into your project:
+Add via NuGet:
 
-* `TasmotaSharp/TasmotaClient.cs`
+```bash
+dotnet add package TasmotaSharp
+````
 
-> Namespace is `TasmotaSharp`. Adjust if you prefer.
+Or copy the file and models:
 
-**Requirements:** .NET 6+ (recommended), `System.Text.Json`.
+```
+TasmotaSharp/TasmotaClient.cs
+```
+
+**Requirements:** .NET 6+ (tested with .NET 8/9).
+Dependencies: `System.Text.Json`, `Microsoft.Extensions.Logging.Abstractions`.
 
 ---
 
@@ -30,18 +41,18 @@ bool? isOn = await client.GetRelayStateAsync(1);
 // Time / timezone / DST
 await client.SetTimezoneAsync(3);         // UTC+3
 await client.SetDstAsync(false);          // DST off
-await client.SetTimeAsync(DateTime.Now);  // set device time
+await client.SetTimeAsync(DateTime.Now);  // sync time
 
-// Sensors (Status 10)
+// Sensors
 var sns = await client.GetSensorStatusAsync();
 
-// Weekly schedule (Timers)
+// Weekly timers
 await client.SetTimerAsync(1, new TimeSpan(18,30,0),
-    new[]{ DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Saturday }, 1, 1); // 18:30 ON
+    new[]{ DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Saturday }, 1, 1); // ON
 await client.SetTimerAsync(2, new TimeSpan(23,0,0),
-    new[]{ DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Saturday }, 1, 0); // 23:00 OFF
+    new[]{ DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Saturday }, 1, 0); // OFF
 
-// Multi-relay schedule (same days/times for many outputs)
+// Multi-relay schedule
 await client.SetTimerMultiAsync(
     days: new[]{ DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday },
     onTimeHHmm: "09:00",
@@ -51,28 +62,31 @@ await client.SetTimerMultiAsync(
     startTimerIndex: 1
 );
 
-// One-shot at absolute date/time (turn ON then revert after 30s)
-await client.SetOneShotDateRuleAsync(
-    ruleIndex: 1,
-    whenLocal: new DateTime(2025,9,5,18,30,0),
-    output: 1,
-    onWhenTrue: true,
-    pulse: TimeSpan.FromSeconds(30)
-);
+// One-shot at absolute time
+await client.SetOneShotDateRuleAsync(1, new DateTime(2025,9,5,18,30,0), 1, true, TimeSpan.FromSeconds(30));
 
-// “Now + 10s” relative pulse
+// Relative pulse “Now + 10s”
 await client.ScheduleOneShotInAsync(TimeSpan.FromSeconds(10), 1, true, TimeSpan.FromSeconds(10));
 
 // Rule read/delete
 var r1 = await client.GetRuleInfoAsync(1);
 await client.DeleteRuleAsync(1);
 
-// Wi-Fi scan
+// Wi-Fi
+await client.SetWifiCredentialsAsync("OfficeWiFi", "StrongPass!", restartAfter: true);
+var wifi = await client.GetWifiInfoAsync();
 var nets = await client.ScanWifiAsync();
 
-// Config backup/restore
+// MQTT
+await client.SetMqttAsync("10.0.4.10", port:1883, user:"smg", password:"secret");
+var mqtt = await client.GetMqttStatusAsync();
+
+// Backup/restore
 var bytes = await client.BackupConfigAsync();
 await client.RestoreConfigAsync(bytes);
+
+// Restart
+await client.RestartAsync();
 ```
 
 ---
@@ -81,24 +95,33 @@ await client.RestoreConfigAsync(bytes);
 
 * **Relays:** `SetRelayAsync`, `ToggleRelayAsync`, `GetRelayStateAsync`
 * **Time/Timezone/DST:** `GetTimeAsync`, `SetTimeAsync`, `SetTimezoneAsync`, `SetDstAsync`
-* **Status/Sensors:** `GetStatusAsync` (Status 0), `GetSensorStatusAsync` (Status 10)
+* **Status/Sensors:** `GetStatusAsync`, `GetSensorStatusAsync`, `SetTelePeriodAsync`
 * **Wi-Fi:** `SetWifiCredentialsAsync`, `GetWifiInfoAsync`, `ScanWifiAsync`
 * **MQTT:** `SetMqttAsync`, `GetMqttStatusAsync`
 * **Scheduling**
 
-    * **Timers (weekly):** `SetTimerAsync`, `SetTimerByMaskAsync`, `EnableAllTimersAsync`, `DisableTimerAsync`, `ClearTimerAsync`
-    * **Rules (one-shot/relative/sunrise-sunset):** `SetOneShotDateRuleAsync`, `ScheduleOneShotInAsync`, `PulseAfterAsync`, `SetRuleScriptAsync`, `EnableRuleAsync`, `GetRuleInfoAsync`, `GetAllRulesAsync`, `ClearRuleAsync`
-    * **Multi-relay orchestration:** `SetTimerMultiAsync`
+  * **Timers (weekly):** `SetTimerAsync`, `SetTimerByMaskAsync`, `EnableAllTimersAsync`, `DisableTimerAsync`, `ClearTimerAsync`
+  * **Rules:** `SetOneShotDateRuleAsync`, `ScheduleOneShotInAsync`, `PulseAfterAsync`, `SetRuleScriptAsync`, `EnableRuleAsync`, `GetRuleInfoAsync`, `GetAllRulesAsync`, `ClearRuleAsync`, `DeleteRuleAsync`
+  * **Multi-relay orchestration:** `SetTimerMultiAsync`
+  * **SimpleRule model:** `ApplySimpleRuleAsync`, `GetSimpleRuleAsync`
 * **Geo:** `SetGeoAsync` (for Sunrise/Sunset rules)
+* **LED:** `SetLedStateAsync`, `SetLedPowerAsync`
 * **mDNS:** `EnableMdnsAsync`, `GetMdnsStateAsync`
 * **System:** `RestartAsync`, `FactoryResetAsync`
-* **Backup/Restore:** `BackupConfigAsync` (`/dl`), `RestoreConfigAsync` (`/u`)
+* **Backup/Restore:** `BackupConfigAsync`, `RestoreConfigAsync`
 
 ---
 
 ## Real-world use cases
 
-### 1) Weekdays 08:30–20:15 ON/OFF for relays 1–4
+### 1) Toggle relay and check status
+
+```csharp
+var newState = await client.ToggleRelayAsync(1);
+Console.WriteLine($"Relay1 is now {(newState==true?"ON":"OFF")}");
+```
+
+### 2) Weekdays 08:30–20:15 ON/OFF for relays 1–4
 
 ```csharp
 await client.SetTimerMultiAsync(
@@ -111,7 +134,7 @@ await client.SetTimerMultiAsync(
 );
 ```
 
-### 2) Turn ON 15 minutes after sunset for 5 minutes
+### 3) Turn ON 15 minutes after sunset for 5 minutes
 
 ```csharp
 await client.SetGeoAsync(41.0082, 28.9784); // Istanbul
@@ -124,40 +147,57 @@ var rule = new SimpleRule {
     Pulse = TimeSpan.FromMinutes(5),
     AutoDisable = false
 };
-await client.ApplySimpleRuleAsync(ruleIndex: 1, rule, timerIndexForRelative: 1);
+await client.ApplySimpleRuleAsync(1, rule);
 ```
 
-### 3) Fire a short pulse after 30 seconds (5s ON)
+### 4) Fire a short pulse after 30 seconds
 
 ```csharp
-await client.PulseAfterAsync(
-    startDelaySeconds: 30,
-    output: 1,
-    pulseSeconds: 5,
-    ruleIndex: 1,
-    timerIndex: 1
-);
+await client.PulseAfterAsync(30, 1, 5);
 ```
 
-### 4) MQTT setup
+### 5) Absolute one-shot
 
 ```csharp
-await client.SetMqttAsync(
-    host: "10.0.4.10",
-    port: 1883,
-    user: "smg",
-    password: "secret",
-    clientId: "shelf-speaker-01",
-    topic: "tasmota/shelf01",
-    fullTopic: "%prefix%/%topic%/"
-);
+await client.SetOneShotDateRuleAsync(1, new DateTime(2025,9,5,18,30,0), 1, true, TimeSpan.FromSeconds(30));
+```
+
+### 6) Wi-Fi scan
+
+```csharp
+var nets = await client.ScanWifiAsync();
+foreach (var ap in nets)
+    Console.WriteLine($"{ap.SSID} {ap.SignalDbm} dBm");
+```
+
+### 7) MQTT setup
+
+```csharp
+await client.SetMqttAsync("10.0.4.10", 1883, "user", "pass", "client01", "tasmota/dev01");
 var mqtt = await client.GetMqttStatusAsync();
+Console.WriteLine($"Connected: {mqtt?.MqttHost}");
 ```
 
-### 5) Wi-Fi credentials + restart
+### 8) Backup/Restore
 
 ```csharp
-await client.SetWifiCredentialsAsync("OfficeWiFi", "StrongPass!", restartAfter: true);
+var backup = await client.BackupConfigAsync();
+await File.WriteAllBytesAsync("config.dmp", backup!);
+var ok = await client.RestoreConfigAsync(backup!);
+```
+
+### 9) LED control
+
+```csharp
+await client.SetLedStateAsync(1);       // mode
+await client.SetLedPowerAsync(1, true); // ON
+```
+
+### 10) System
+
+```csharp
+await client.RestartAsync();
+await client.FactoryResetAsync(1);
 ```
 
 ---
@@ -174,13 +214,14 @@ await client.SetWifiCredentialsAsync("OfficeWiFi", "StrongPass!", restartAfter: 
 
 * `Task<DateTime?> GetTimeAsync()`
 * `Task<bool> SetTimeAsync(DateTime dt)`
-* `Task<bool> SetTimezoneAsync(int offset)` → TR: `3`
-* `Task<bool> SetDstAsync(bool enabled)` → `SetOption36`
+* `Task<bool> SetTimezoneAsync(int offset)`
+* `Task<bool> SetDstAsync(bool enabled)`
 
 ### Status & Sensors
 
-* `Task<TasmotaStatus?> GetStatusAsync()` → maps `Status 0`
-* `Task<TasmotaSensorStatus?> GetSensorStatusAsync()` → maps `Status 10`
+* `Task<TasmotaStatus?> GetStatusAsync()`
+* `Task<TasmotaSensorStatus?> GetSensorStatusAsync()`
+* `Task<bool> SetTelePeriodAsync(int seconds)`
 
 ### Wi-Fi
 
@@ -190,88 +231,81 @@ await client.SetWifiCredentialsAsync("OfficeWiFi", "StrongPass!", restartAfter: 
 
 ### MQTT
 
-* `Task<bool> SetMqttAsync(string host, int? port=null, string? user=null, string? password=null, string? clientId=null, string? topic=null, string? fullTopic=null, bool reconnect=true)`
+* `Task<bool> SetMqttAsync(...)`
 * `Task<StatusMQT?> GetMqttStatusAsync()`
 
 ### Scheduling – Timers
 
-* `Task<bool> SetTimerAsync(int index, TimeSpan time, IEnumerable<DayOfWeek> days, int output, int action, bool repeat=true, int mode=0, int window=0)`
-* `Task<bool> SetTimerByMaskAsync(int index, string daysMask, string timeHHmm, int output, int action, bool repeat=true, int mode=0, int window=0)`
+* `Task<bool> SetTimerAsync(...)`
+* `Task<bool> SetTimerByMaskAsync(...)`
 * `Task<bool> EnableAllTimersAsync(bool enable)`
 * `Task<bool> DisableTimerAsync(int index)`
 * `Task<bool> ClearTimerAsync(int index)`
-
-> **Days mask:** 7 chars for `Sun..Sat`. `'-'` = off, any char = on. Example: `-1-1-1-` (Mon, Wed, Fri).
+* `Task<bool> SetTimerMultiAsync(...)`
 
 ### Scheduling – Rules
 
-* `Task<bool> SetOneShotDateRuleAsync(int ruleIndex, DateTime whenLocal, int output, bool onWhenTrue, TimeSpan? pulse=null)`
-* `Task<bool> ScheduleOneShotInAsync(TimeSpan delay, int output, bool onWhenTrue, TimeSpan? pulse=null, int ruleIndex=1)`
-* `Task<bool> PulseAfterAsync(int startDelaySeconds, int output, int pulseSeconds, int ruleIndex=1, int timerIndex=1)`
-* `Task<bool> EnableRuleAsync(int ruleIndex, bool enable)`
-* `Task<bool> SetRuleScriptAsync(int ruleIndex, string script)`
-* `Task<bool> ClearRuleAsync(int ruleIndex)` / `DeleteRuleAsync(int ruleIndex)`
+* `Task<bool> SetOneShotDateRuleAsync(...)`
+* `Task<bool> ScheduleOneShotInAsync(...)`
+* `Task<bool> PulseAfterAsync(...)`
+* `Task<bool> EnableRuleAsync(...)`
+* `Task<bool> SetRuleScriptAsync(...)`
+* `Task<bool> ClearRuleAsync(...)` / `DeleteRuleAsync(...)`
 * `Task<RuleInfo?> GetRuleInfoAsync(int ruleIndex)`
 * `Task<List<RuleInfo>> GetAllRulesAsync()`
 
-### Simple rule model (high-level)
+### Simple rule model
 
-* `Task<bool> ApplySimpleRuleAsync(int ruleIndex, SimpleRule rule, int timerIndexForRelative=1)`
+* `Task<bool> ApplySimpleRuleAsync(...)`
 * `Task<SimpleRule?> GetSimpleRuleAsync(int ruleIndex)`
 
-### Geo / mDNS / System / Backup
+### Geo / LED / mDNS / System / Backup
 
 * `Task<bool> SetGeoAsync(double latitude, double longitude)`
-* `Task<bool> EnableMdnsAsync(bool enable)` / `Task<bool?> GetMdnsStateAsync()`
-* `Task<bool> RestartAsync()` / `Task<bool> FactoryResetAsync(int mode)` (`1`, `2`, or `5`)
-* `Task<byte[]?> BackupConfigAsync()` (`/dl`) / `Task<bool> RestoreConfigAsync(byte[] dmpData)` (`/u`)
+* `Task<bool> SetLedStateAsync(int mode)`
+* `Task<bool?> SetLedPowerAsync(int index, bool on)`
+* `Task<bool> EnableMdnsAsync(bool enable)`
+* `Task<bool?> GetMdnsStateAsync()`
+* `Task<bool> RestartAsync()`
+* `Task<bool> FactoryResetAsync(int mode)`
+* `Task<byte[]?> BackupConfigAsync()`
+* `Task<bool> RestoreConfigAsync(byte[] dmpData)`
 
 ---
 
 ## Tips & caveats
 
-* All methods are **async**; don’t block UI threads.
-* **Rules `Delay` unit is deciseconds** (1/10 s). For 5 s use `Delay 50`.
-* **Timers:** typical max **16** entries. `SetTimerMultiAsync` uses **2** per output (ON/OFF).
-* **Rules:** only `Rule1..Rule3`. One-shot helpers may use an auxiliary rule (for `Status 7` trigger).
-* **Day restrictions:** prefer **Timers** for day-specific schedules. `RuleBacklog` day masking is possible but more complex.
-* API is tolerant to Tasmota field variations (`SSID/SSId`, `RSSI/Signal` etc.).
-* The class owns its **HttpClient**. For heavy multi-device scenarios you can refactor to inject a shared instance.
-* Plain HTTP; keep devices on a trusted network and use Tasmota auth if available.
+* All methods are **async**; always `await`.
+* **Rules Delay** unit = deciseconds (1/10 s).
+* **Timers:** max 16 entries. Multi uses 2 per relay (ON/OFF).
+* **Rules:** only Rule1–Rule3. Helpers may consume 2 rules.
+* **Day masks:** timers manage days better than rules.
+* Wi-Fi scan may require polling (status: "Scanning").
+* Class owns its `HttpClient`. Use `IHttpClientFactory` for many devices.
+* Plain HTTP; keep devices in trusted networks.
 
 ---
 
 ## Troubleshooting
 
-**Rule didn’t fire at the expected minute**
+**Rule didn’t fire at expected time**
 
-* Ensure device time is correct (`GetTimeAsync` / `SetTimeAsync`).
-* One-shot uses pattern `-MM-dd'T'HH:mm` against `StatusTIM#Local`.
-* Did you enable the rule? (`EnableRuleAsync(ruleIndex, true)`).
+* Check device time (`GetTimeAsync` / `SetTimeAsync`).
+* Ensure rule is enabled (`EnableRuleAsync`).
 
-**Wi-Fi scan returns nothing**
+**Wi-Fi scan empty**
 
-* The device reports `WifiScan: "Scanning"` while in progress. Increase `timeoutMs`/`pollIntervalMs`.
+* Device reports `"Scanning"` until complete. Increase timeout.
 
-**Not enough Timer slots**
+**Timer slots full**
 
-* You have 16 total. Use `RuleBacklog` or split the plan across devices or different times.
+* Max 16. Use RuleBacklog or split across devices.
 
 ---
 
-## Example: Minimal **Console App** (`Program.cs`)
+## Example: Console App
 
 ```csharp
-// <Project Sdk="Microsoft.NET.Sdk">
-//   <PropertyGroup>
-//     <OutputType>Exe</OutputType>
-//     <TargetFramework>net8.0</TargetFramework>
-//     <Nullable>enable</Nullable>
-//   </PropertyGroup>
-// </Project>
-
-using TasmotaSharp;
-
 static async Task<int> Main(string[] args)
 {
     var host = args.Length > 0 ? args[0] : "10.0.4.41";
@@ -279,122 +313,64 @@ static async Task<int> Main(string[] args)
 
     Console.WriteLine($"Connected to {host}");
 
-    // Toggle relay 1
     var state = await client.ToggleRelayAsync(1);
-    Console.WriteLine($"Relay1 is now: {(state == true ? "ON" : "OFF")}");
+    Console.WriteLine($"Relay1: {(state==true?"ON":"OFF")}");
 
-    // Schedule Mon/Wed/Sat 18:30 ON, 23:00 OFF
-    await client.SetTimerAsync(1, new TimeSpan(18,30,0), new[]{ DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Saturday }, 1, 1);
-    await client.SetTimerAsync(2, new TimeSpan(23, 0,0), new[]{ DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Saturday }, 1, 0);
-
-    // One-shot in 10s, pulse 10s
     await client.ScheduleOneShotInAsync(TimeSpan.FromSeconds(10), 1, true, TimeSpan.FromSeconds(10));
 
-    // Print Wi-Fi networks
     var nets = await client.ScanWifiAsync();
-    if (nets != null)
-    {
-        Console.WriteLine("Nearby APs:");
-        foreach (var ap in nets)
-            Console.WriteLine($"  {ap.SSID} ch{ap.Channel} {ap.SignalDbm} dBm ({ap.Encryption})");
-    }
-
+    foreach (var ap in nets ?? [])
+        Console.WriteLine($"{ap.SSID} ch{ap.Channel} {ap.SignalDbm} dBm");
     return 0;
 }
 ```
 
 ---
 
-## Example: **Worker Service** (Background service with DI)
-
-`TasmotaWorker.cs`:
+## Example: Worker Service with DI
 
 ```csharp
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using TasmotaSharp;
-
 public sealed class TasmotaWorker(ILogger<TasmotaWorker> logger) : BackgroundService
 {
-    private readonly ILogger<TasmotaWorker> _logger = logger!;
-    private TasmotaClient? _client;
+    private readonly ILogger<TasmotaWorker> _logger = logger;
+    private readonly TasmotaClient _client = new("10.0.4.41");
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _client = new TasmotaClient("10.0.4.41");
-
-        _logger.LogInformation("TasmotaWorker started");
-
-        // Example: ensure Timers subsystem is enabled and keep relay heartbeat
+        _logger.LogInformation("Worker started");
         await _client.EnableAllTimersAsync(true);
 
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                // Heartbeat: toggle LED state mode 1..8 (or just read status)
                 await _client.SetLedStateAsync(1);
-
                 var wifi = await _client.GetWifiInfoAsync();
-                _logger.LogInformation("WiFi: RSSI={Rssi} SSID={Ssid}",
-                    wifi?.Wifi?.RSSI, wifi?.Wifi?.SSId);
-
-                // Every hour, make sure timezone is correct (idempotent)
-                await _client.SetTimezoneAsync(3);
+                _logger.LogInformation("WiFi: RSSI={r}, SSID={s}", wifi?.Wifi?.RSSI, wifi?.Wifi?.SSId);
 
                 await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
             }
-            catch (TaskCanceledException) when (stoppingToken.IsCancellationRequested) { }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Worker loop error");
-                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                _logger.LogError(ex, "Loop error");
+                await Task.Delay(10000, stoppingToken);
             }
         }
-
-        _logger.LogInformation("TasmotaWorker stopping");
     }
 }
 ```
-
-`Program.cs`:
-
-```csharp
-// <Project Sdk="Microsoft.NET.Sdk.Worker">
-//   <PropertyGroup>
-//     <TargetFramework>net8.0</TargetFramework>
-//     <Nullable>enable</Nullable>
-//     <ImplicitUsings>enable</ImplicitUsings>
-//   </PropertyGroup>
-//   <ItemGroup>
-//     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-//     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
-//   </ItemGroup>
-// </Project>
-
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-
-await Host.CreateDefaultBuilder(args)
-    .ConfigureLogging(b => b.AddConsole())
-    .ConfigureServices(services =>
-    {
-        services.AddHostedService<TasmotaWorker>();
-    })
-    .RunConsoleAsync();
-```
-
-> You can promote `TasmotaClient` to a DI service if you refactor its `HttpClient` handling to accept an injected, shared instance.
 
 ---
 
 ## License
 
-Use freely in your projects. Attribution appreciated. 💚
+MIT. Use freely in your projects. Attribution appreciated 💚
 
 ---
 
-## Changelog (summary)
+## Changelog
 
-* Initial release: relays, time/zone, Wi-Fi, MQTT, Timers, Rules (one-shot / relative / sunrise-sunset), backup/restore, multi-relay scheduling (`SetTimerMultiAsync`).
+* v1.0: Initial release with relays, timers, rules, sensors, Wi-Fi, MQTT, geo, LED, backup/restore, mDNS, system functions.
+
+```
+
