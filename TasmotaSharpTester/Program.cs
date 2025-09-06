@@ -34,25 +34,27 @@ var app = builder.Build();
 var scope = app.Services.CreateScope();
 var client = scope.ServiceProvider.GetRequiredService<TasmotaClient>();
 
-client.SetIp("10.0.4.41");
+//client.SetIp("10.0.4.41");
+client.SetIp("10.0.0.177");
 
+var cnt = await client.GetRelayCountAsync();
 var sensorstatus = await client.GetSensorStatusAsync();
+var time = await client.GetTimeAsync();
 
-
-// var scanresults = await client.ScanWifiAsync();
-// await client.EnableMdnsAsync(true);
-// var mdns = await client.GetMdnsStateAsync();
-// Console.WriteLine($"mDNS: {(mdns == true ? "ON" : mdns == false ? "OFF" : "Unknown")}");
+var scanresults = await client.ScanWifiAsync();
+ await client.EnableMdnsAsync(true);
+ var mdns = await client.GetMdnsStateAsync();
+ Console.WriteLine($"mDNS: {(mdns == true ? "ON" : mdns == false ? "OFF" : "Unknown")}");
 //
 // // Restart
 // await client.RestartAsync();
 // Türkiye için sabit UTC+3
-//await client.SetTimezoneAsync(3);
+await client.SetTimezoneAsync(3);
 
 // DST kapalı (Türkiye’de yaz/kış saati yok)
-//await client.SetDstAsync(false);
+await client.SetDstAsync(false);
 
-//await client.SetTimeAsync(DateTime.Now);
+await client.SetTimeAsync(DateTime.Now);
 // var backup = await client.BackupConfigAsync();
 // if (backup != null)
 // {

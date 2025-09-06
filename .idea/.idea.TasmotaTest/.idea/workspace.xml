@@ -8,15 +8,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="40c77a4d-623a-4174-b9d0-f4e26dca9ecd" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/TasmotaSharp/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TasmotaSharpTester/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.TasmotaTest/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.TasmotaTest/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TasmotaSharp/Models/SimpleRule.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TasmotaSharp/Models/SimpleRule.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TasmotaSharp/Models/TasmotaStatus.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TasmotaSharp/Models/TasmotaStatus.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TasmotaSharp/TasmotaClient.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TasmotaSharp/TasmotaClient.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TasmotaSharp/TasmotaSharp.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/TasmotaSharp/TasmotaSharp.csproj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TasmotaSharpTester/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/TasmotaSharpTester/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TasmotaSharpTester/TasmotaSharpTester.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/TasmotaSharpTester/TasmotaSharpTester.csproj" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,6 +53,9 @@
   &quot;associatedIndex&quot;: 6
 }</component>
   <component name="ProjectId" id="326GA9JEV71Ohuf2ZCIGZFAbgtc" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -110,7 +107,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1756733462426</updated>
-      <workItem from="1756733463527" duration="13108000" />
+      <workItem from="1756733463527" duration="24218000" />
     </task>
     <task id="LOCAL-00001" summary="Add initial project files and models for TasmotaSharp client">
       <option name="closed" value="true" />
@@ -136,7 +133,23 @@
       <option name="project" value="LOCAL" />
       <updated>1756801478041</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Refactor project structure and update dependencies for TasmotaSharp client">
+      <option name="closed" value="true" />
+      <created>1756808338691</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1756808338691</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Update README and TasmotaClient constructor for improved clarity and usability">
+      <option name="closed" value="true" />
+      <created>1756809398676</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1756809398676</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -149,7 +162,9 @@
     <MESSAGE value="Add initial project files and models for TasmotaSharp client" />
     <MESSAGE value="Add README files for TasmotaSharp client with installation instructions, features, and usage examples" />
     <MESSAGE value="Add project metadata and NuGet package configuration for TasmotaSharp client" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add project metadata and NuGet package configuration for TasmotaSharp client" />
+    <MESSAGE value="Refactor project structure and update dependencies for TasmotaSharp client" />
+    <MESSAGE value="Update README and TasmotaClient constructor for improved clarity and usability" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update README and TasmotaClient constructor for improved clarity and usability" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -171,13 +186,52 @@
           <line>87</line>
           <properties documentPath="$PROJECT_DIR$/ConsoleApp1/Program.cs" containingFunctionPresentation="">
             <startOffsets>
-              <option value="3816" />
+              <option value="3915" />
             </startOffsets>
             <endOffsets>
-              <option value="3852" />
+              <option value="3951" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/TasmotaSharpTester/Program.cs</url>
+          <line>102</line>
+          <properties documentPath="$PROJECT_DIR$/TasmotaSharpTester/Program.cs" containingFunctionPresentation="">
+            <startOffsets>
+              <option value="3289" />
+            </startOffsets>
+            <endOffsets>
+              <option value="3600" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="17" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/TasmotaSharpTester/Program.cs</url>
+          <line>72</line>
+          <properties documentPath="$PROJECT_DIR$/TasmotaSharpTester/Program.cs" containingFunctionPresentation="">
+            <startOffsets>
+              <option value="2382" />
+            </startOffsets>
+            <endOffsets>
+              <option value="2429" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="18" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/TasmotaSharpTester/Program.cs</url>
+          <line>51</line>
+          <properties documentPath="$PROJECT_DIR$/TasmotaSharpTester/Program.cs" containingFunctionPresentation="">
+            <startOffsets>
+              <option value="1716" />
+            </startOffsets>
+            <endOffsets>
+              <option value="1749" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="19" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
