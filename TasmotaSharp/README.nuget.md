@@ -114,3 +114,9 @@ await client.EnableMdnsAsync(true);
 
 MIT © Serkan Polat
 Use freely in your projects 💚
+
+
+## 🙌 Acknowledgements
+
+* [Tasmota](https://tasmota.github.io/) project and community.
+* [TasmotaMobileClient Blazor Maui Mobile App](https://github.com/serkansmg/TasmotaMobileClient/) by Serkan Polat.

@@ -459,3 +459,4 @@ MIT. Use freely in your projects. Attribution appreciated 💚
 ## 🙌 Acknowledgements
 
 * [Tasmota](https://tasmota.github.io/) project and community.
+* [TasmotaMobileClient Blazor Maui Mobile App](https://github.com/serkansmg/TasmotaMobileClient/) by Serkan Polat.
