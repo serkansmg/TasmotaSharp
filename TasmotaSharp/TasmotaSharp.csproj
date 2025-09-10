@@ -5,7 +5,7 @@
 
         <!-- Package metadata -->
         <PackageId>TasmotaSharp</PackageId>
-        <Version>1.0.3</Version>
+        <Version>1.0.4</Version>
         <Authors>Serkan Polat</Authors>
         <Company>SMG Multimedya ve Proje Hizmetleri A.Ş.</Company>
         <Description>Lightweight C# HTTP client for Tasmota devices (ESP32/ESP8266) using the REST API</Description>

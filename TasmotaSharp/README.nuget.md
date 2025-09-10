@@ -29,6 +29,14 @@ await client.SetRelayAsync(1, true);          // Turn ON
 var state = await client.GetRelayStateAsync(1);
 var relayCount = await client.GetRelayCountAsync(); // Auto-discover device capabilities
 
+// Multi-relay control (NEW!)
+await client.SetMultipleRelaysAsync(new Dictionary<int, bool> {
+    { 1, true }, { 2, false }, { 3, true }      // Different states per relay
+});
+await client.SetRelayGroupAsync(new[] { 1, 2, 3 }, true);   // Same state for multiple relays
+await client.SetAllRelaysAsync(false);                      // Turn OFF all relays
+await client.SetRelaysSequentialAsync(new[] { 1, 2, 3 }, true, 200); // Sequential with delay
+
 // Time & timezone management
 await client.SetTimezoneAsync(3);             // UTC+3
 await client.SetDstAsync(false);
@@ -83,10 +91,52 @@ await client.EnableMdnsAsync(true);
 
 ---
 
+## Multi-Relay Control Examples
+
+### Smart Home Automation
+```csharp
+// Living room scene control
+await client.SetMultipleRelaysAsync(new Dictionary<int, bool> {
+    { 1, false },  // Main lights OFF
+    { 2, true },   // Ambient lights ON
+    { 3, true },   // Entertainment system ON
+    { 4, false }   // AC to low
+});
+
+// Morning routine: gradual activation
+await client.SetRelaysSequentialAsync(new[] { 1, 2, 3 }, true, 1000); // 1-second intervals
+```
+
+### Industrial Control
+```csharp
+// Motor startup sequence with safety delays
+await client.SetRelayAsync(1, true);      // Safety systems first
+await Task.Delay(2000);
+await client.SetRelaysSequentialAsync(new[] { 2, 3, 4 }, true, 1500); // Motors with delay
+
+// Emergency stop - immediate shutdown
+await client.SetRelayGroupAsync(new[] { 2, 3, 4, 5 }, false);
+```
+
+### Energy Management
+```csharp
+// Load shedding: turn off non-essential devices
+await client.SetRelayGroupAsync(new[] { 3, 4, 5 }, false);  // Non-essential OFF
+await Task.Delay(5000);
+await client.SetRelayGroupAsync(new[] { 1, 2 }, true);      // Essential systems ON
+```
+
+---
+
 ## Highlights
 
 * **Device Discovery:** Auto-detect relay count and capabilities
 * **Relays:** Set, toggle, query state with multi-relay support
+* **Multi-Relay Control:** Batch operations for efficient device management
+    * `SetMultipleRelaysAsync()` - Different states per relay
+    * `SetRelayGroupAsync()` - Same state for multiple relays
+    * `SetAllRelaysAsync()` - Control all relays at once
+    * `SetRelaysSequentialAsync()` - Sequential control with delays
 * **Advanced Wi-Fi:** Access Point mode, recovery strategies, scanning
 * **Timers:** Weekly schedules, multi-relay orchestration, clear/disable
 * **Rules:** One-shot, relative pulse, sunrise/sunset automation
@@ -100,13 +150,24 @@ await client.EnableMdnsAsync(true);
 
 ---
 
-## What's New in v1.0.3
+## What's New in v1.0.4
 
-* **Device Capabilities:** `GetRelayCountAsync()` for automatic relay detection
-* **Access Point Management:** Full AP mode configuration and control
-* **Wi-Fi Recovery:** Configurable strategies for connection failures
-* **Enhanced Error Handling:** Better logging and exception management
-* **Improved Documentation:** Comprehensive examples and use cases
+* **Multi-Relay Batch Control:** Four new methods for efficient relay management
+    * Individual states: `SetMultipleRelaysAsync()`
+    * Group control: `SetRelayGroupAsync()`
+    * All relays: `SetAllRelaysAsync()`
+    * Sequential timing: `SetRelaysSequentialAsync()`
+* **Enhanced Examples:** Smart home, industrial, and energy management scenarios
+* **Performance Optimization:** Single-command batch operations reduce HTTP overhead
+* **Better Documentation:** Comprehensive use cases and patterns
+
+---
+
+## Previous Updates
+
+* **v1.0.3:** Device capability discovery, Access Point management, Wi-Fi recovery modes
+* **v1.0.2:** Enhanced multi-relay scheduling, improved Wi-Fi scan reliability
+* **v1.0.1:** SimpleRule model, sunrise/sunset support, improved timer management
 
 ---
 

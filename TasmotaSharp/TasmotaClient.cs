@@ -72,8 +72,8 @@ public class TasmotaClient : IDisposable
 
     /// <param name="ipAddress">Device IP or host (e.g. "10.0.4.41" or "tasmota-xxxx.local")</param>
     public TasmotaClient(string ipAddress,
-                         ILogger<TasmotaClient>? logger = null,
-                         IHttpClientFactory? httpClientFactory = null)
+        ILogger<TasmotaClient>? logger = null,
+        IHttpClientFactory? httpClientFactory = null)
     {
         try
         {
@@ -83,16 +83,16 @@ public class TasmotaClient : IDisposable
             if (_httpClientFactory is null)
             {
                 _fallbackHttp = new HttpClient(new SocketsHttpHandler
-                {
-                    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                    PooledConnectionLifetime = TimeSpan.FromMinutes(5)
-                })
-                { Timeout = TimeSpan.FromSeconds(3) }; // Reduced from 15 to 3 seconds
+                    {
+                        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                        PooledConnectionLifetime = TimeSpan.FromMinutes(5)
+                    })
+                    { Timeout = TimeSpan.FromSeconds(3) }; // Reduced from 15 to 3 seconds
             }
 
             _rootUrl = NormalizeRoot(ipAddress);
             _baseUrl = $"{_rootUrl}/cm?cmnd=";
-            
+
             LogInformation("TasmotaClient initialized for {Url}", _rootUrl);
         }
         catch (Exception ex)
@@ -120,7 +120,7 @@ public class TasmotaClient : IDisposable
                     })
                     { Timeout = TimeSpan.FromSeconds(3) }; // Reduced from 15 to 3 seconds
             }
-            
+
             LogInformation("TasmotaClient initialized without IP address");
         }
         catch (Exception ex)
@@ -129,9 +129,11 @@ public class TasmotaClient : IDisposable
             throw;
         }
     }
-    
+
     /// <summary>Convenience overload that matches the original API.</summary>
-    public TasmotaClient(string ipAddress) : this(ipAddress, logger: null, httpClientFactory: null) { }
+    public TasmotaClient(string ipAddress) : this(ipAddress, logger: null, httpClientFactory: null)
+    {
+    }
 
     /// <summary>Change device IP/host at runtime.</summary>
     public void SetIp(string ipOrHost)
@@ -166,24 +168,36 @@ public class TasmotaClient : IDisposable
             throw new ArgumentException($"Invalid IP/host format: {ipOrHost}", nameof(ipOrHost), ex);
         }
     }
-    
-    // AP Mode açma/kapama
+
+    /// <summary>
+    /// Set Access Point mode (AP mode: 2=AP only, 4=STA+AP, 3=STA only)
+    /// </summary>
+    /// <param name="enable"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     public async Task<bool> SetAccessPointModeAsync(bool enable, CancellationToken ct = default)
     {
-        try 
-        { 
-            await SendCommandAsync($"WifiConfig {(enable ? 2 : 4)}", ct); 
-            return true; 
+        try
+        {
+            await SendCommandAsync($"WifiConfig {(enable ? 2 : 4)}", ct);
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetAccessPointModeAsync] Failed to set AP mode {Enable}", enable); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetAccessPointModeAsync] Failed to set AP mode {Enable}", enable);
+            return false;
         }
     }
 
-// AP credentials ayarlama
-    public async Task<bool> SetAccessPointCredentialsAsync(string apSsid, string apPassword, CancellationToken ct = default)
+    /// <summary>
+    /// Set Access Point SSID and Password
+    /// </summary>
+    /// <param name="apSsid"></param>
+    /// <param name="apPassword"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    public async Task<bool> SetAccessPointCredentialsAsync(string apSsid, string apPassword,
+        CancellationToken ct = default)
     {
         try
         {
@@ -191,14 +205,18 @@ public class TasmotaClient : IDisposable
             await SendCommandAsync($"APPassword {apPassword}", ct);
             return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetAccessPointCredentialsAsync] Failed to set AP credentials"); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetAccessPointCredentialsAsync] Failed to set AP credentials");
+            return false;
         }
     }
 
-// WiFi bağlantı durumu kontrolü
+   /// <summary>
+   /// Get current WiFi mode (e.g. "STA", "AP", "STA+AP")
+   /// </summary>
+   /// <param name="ct"></param>
+   /// <returns></returns>
     public async Task<string?> GetWifiModeAsync(CancellationToken ct = default)
     {
         try
@@ -206,23 +224,29 @@ public class TasmotaClient : IDisposable
             using var doc = await SendCommandAsync("WifiConfig", ct);
             return doc?.RootElement.GetProperty("WifiConfig").GetString();
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[GetWifiModeAsync] Failed to get WiFi mode"); 
-            return null; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[GetWifiModeAsync] Failed to get WiFi mode");
+            return null;
         }
     }
+
+   /// <summary>
+   /// Set WiFi recovery mode (0=disabled, 1=STA, 2=AP, 3=STA+AP, 4=AP+Config)
+   /// </summary>
+   /// <param name="mode"></param>
+   /// <returns></returns>
     public async Task<bool> SetWifiRecoveryModeAsync(WifiRecoveryMode mode)
     {
-        try 
-        { 
-            await SendCommandAsync($"WifiConfig {(int)mode}"); 
-            return true; 
+        try
+        {
+            await SendCommandAsync($"WifiConfig {(int)mode}");
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetWifiRecoveryModeAsync] Failed to set WiFi recovery mode {Mode}", mode); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetWifiRecoveryModeAsync] Failed to set WiFi recovery mode {Mode}", mode);
+            return false;
         }
     }
 
@@ -236,7 +260,8 @@ public class TasmotaClient : IDisposable
             if (_logger != null)
                 _logger.LogDebug(msg, args);
             else
-                Console.WriteLine("[DBG] " + string.Format(System.Globalization.CultureInfo.InvariantCulture, msg, args));
+                Console.WriteLine(
+                    "[DBG] " + string.Format(System.Globalization.CultureInfo.InvariantCulture, msg, args));
         }
         catch
         {
@@ -251,7 +276,8 @@ public class TasmotaClient : IDisposable
             if (_logger != null)
                 _logger.LogInformation(msg, args);
             else
-                Console.WriteLine("[INF] " + string.Format(System.Globalization.CultureInfo.InvariantCulture, msg, args));
+                Console.WriteLine(
+                    "[INF] " + string.Format(System.Globalization.CultureInfo.InvariantCulture, msg, args));
         }
         catch
         {
@@ -266,7 +292,8 @@ public class TasmotaClient : IDisposable
             if (_logger != null)
                 _logger.LogWarning(msg, args);
             else
-                Console.WriteLine("[WRN] " + string.Format(System.Globalization.CultureInfo.InvariantCulture, msg, args));
+                Console.WriteLine(
+                    "[WRN] " + string.Format(System.Globalization.CultureInfo.InvariantCulture, msg, args));
         }
         catch
         {
@@ -281,7 +308,9 @@ public class TasmotaClient : IDisposable
             if (_logger != null)
                 _logger.LogError(ex, msg, args);
             else
-                Console.WriteLine("[ERR] " + string.Format(System.Globalization.CultureInfo.InvariantCulture, msg, args) + " :: " + ex);
+                Console.WriteLine("[ERR] " +
+                                  string.Format(System.Globalization.CultureInfo.InvariantCulture, msg, args) + " :: " +
+                                  ex);
         }
         catch
         {
@@ -297,13 +326,14 @@ public class TasmotaClient : IDisposable
         {
             var url = _baseUrl + Uri.EscapeDataString(command);
             LogDebug("Sending command: {Cmd} -> {Url}", command, url);
-            
+
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
-            using var res = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-            
+            using var res = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct)
+                .ConfigureAwait(false);
+
             var s = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
             LogDebug("Response ({Status}): {Body}", (int)res.StatusCode, Truncate(s, 800));
-            
+
             return JsonOrNull(s);
         }
         catch (Exception ex)
@@ -319,7 +349,7 @@ public class TasmotaClient : IDisposable
         {
             var url = _baseUrl + Uri.EscapeDataString(command);
             LogDebug("GET string: {Cmd} -> {Url}", command, url);
-            
+
             return await Http.GetStringAsync(url, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -331,13 +361,13 @@ public class TasmotaClient : IDisposable
 
     private static JsonDocument? JsonOrNull(string? s)
     {
-        try 
-        { 
-            return s is null ? null : JsonDocument.Parse(s); 
+        try
+        {
+            return s is null ? null : JsonDocument.Parse(s);
         }
-        catch 
-        { 
-            return null; 
+        catch
+        {
+            return null;
         }
     }
 
@@ -348,20 +378,26 @@ public class TasmotaClient : IDisposable
 
     #region Relay controls
 
-    /// <summary>Set relay n to ON/OFF (n = 1..8)</summary>
+    /// <summary>
+    /// Set relay n (n = 1..8) state ON/OFF; returns new state (true=ON, false=OFF, null=unknown)
+    /// </summary>
+    /// <param name="relay"></param>
+    /// <param name="state"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     public async Task<bool?> SetRelayAsync(int relay, bool state, CancellationToken ct = default)
     {
         try
         {
             using var doc = await SendCommandAsync($"Power{relay} {(state ? "ON" : "OFF")}", ct);
             if (doc == null) return null;
-            
+
             var prop = doc.RootElement.EnumerateObject()
                 .FirstOrDefault(p => p.Name.StartsWith($"POWER{relay}", StringComparison.OrdinalIgnoreCase));
-            
+
             if (prop.Value.ValueKind == JsonValueKind.Undefined)
                 return null;
-                
+
             return string.Equals(prop.Value.GetString(), "ON", StringComparison.OrdinalIgnoreCase);
         }
         catch (Exception ex)
@@ -371,20 +407,25 @@ public class TasmotaClient : IDisposable
         }
     }
 
-    /// <summary>Toggle relay n (n = 1..8)</summary>
+    /// <summary>
+    /// Set relay n (n = 1..8) state TOGGLE; returns new state (true=ON, false=OFF, null=unknown)
+    /// </summary>
+    /// <param name="relay"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     public async Task<bool?> ToggleRelayAsync(int relay, CancellationToken ct = default)
     {
         try
         {
             using var doc = await SendCommandAsync($"Power{relay} TOGGLE", ct);
             if (doc == null) return null;
-            
+
             var prop = doc.RootElement.EnumerateObject()
                 .FirstOrDefault(p => p.Name.StartsWith($"POWER{relay}", StringComparison.OrdinalIgnoreCase));
-            
+
             if (prop.Value.ValueKind == JsonValueKind.Undefined)
                 return null;
-                
+
             return string.Equals(prop.Value.GetString(), "ON", StringComparison.OrdinalIgnoreCase);
         }
         catch (Exception ex)
@@ -394,20 +435,25 @@ public class TasmotaClient : IDisposable
         }
     }
 
-    /// <summary>Get relay n state (n = 1..8)</summary>
+    /// <summary>
+    /// Get relay n (n = 1..8) state; returns state (true=ON, false=OFF, null=unknown)
+    /// </summary>
+    /// <param name="relay"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     public async Task<bool?> GetRelayStateAsync(int relay, CancellationToken ct = default)
     {
         try
         {
             using var doc = await SendCommandAsync($"Power{relay}", ct);
             if (doc == null) return null;
-            
+
             var prop = doc.RootElement.EnumerateObject()
                 .FirstOrDefault(p => p.Name.StartsWith($"POWER{relay}", StringComparison.OrdinalIgnoreCase));
-            
+
             if (prop.Value.ValueKind == JsonValueKind.Undefined)
                 return null;
-                
+
             return string.Equals(prop.Value.GetString(), "ON", StringComparison.OrdinalIgnoreCase);
         }
         catch (Exception ex)
@@ -421,17 +467,21 @@ public class TasmotaClient : IDisposable
 
     #region Time / timezone / DST
 
-    /// <summary>Read device time (Tasmota "Time")</summary>
+    /// <summary>
+    /// Get device time (from NTP or RTC if present); null if not available
+    /// </summary>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     public async Task<DateTime?> GetTimeAsync(CancellationToken ct = default)
     {
         try
         {
             using var doc = await SendCommandAsync("Time", ct);
             if (doc == null) return null;
-            
+
             if (!doc.RootElement.TryGetProperty("Time", out var timeProp))
                 return null;
-                
+
             var data = timeProp.GetString();
             return data is null ? null : DateTime.Parse(data);
         }
@@ -442,48 +492,58 @@ public class TasmotaClient : IDisposable
         }
     }
 
-    /// <summary>Set device time (also writes to RTC when present)</summary>
+    /// <summary>
+    /// Set device time (requires NTP or RTC); returns true if successful
+    /// </summary>
+    /// <param name="dateTime"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     public async Task<bool> SetTimeAsync(DateTime dateTime, CancellationToken ct = default)
     {
-        try 
-        { 
-            _ = await SendCommandAsync($"Time {dateTime:yyyy-MM-dd HH:mm:ss}", ct); 
-            return true; 
+        try
+        {
+            _ = await SendCommandAsync($"Time {dateTime:yyyy-MM-dd HH:mm:ss}", ct);
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetTimeAsync] Failed to set time to {DateTime}", dateTime); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetTimeAsync] Failed to set time to {DateTime}", dateTime);
+            return false;
         }
     }
 
-    /// <summary>Set timezone offset (e.g. TR = 3)</summary>
+    /// <summary>
+    /// Set timezone offset in hours (e.g. UTC+3 = 3, UTC-5 = -5)
+    /// </summary>
+    /// <param name="offset"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     public async Task<bool> SetTimezoneAsync(int offset, CancellationToken ct = default)
     {
-        try 
-        { 
-            _ = await SendCommandAsync($"Timezone {offset}", ct); 
-            return true; 
+        try
+        {
+            _ = await SendCommandAsync($"Timezone {offset}", ct);
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetTimezoneAsync] Failed to set timezone offset {Offset}", offset); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetTimezoneAsync] Failed to set timezone offset {Offset}", offset);
+            return false;
         }
     }
 
     /// <summary>Enable/disable DST (commonly SetOption36 in many builds)</summary>
     public async Task<bool> SetDstAsync(bool enabled, CancellationToken ct = default)
     {
-        try 
-        { 
-            _ = await SendCommandAsync($"SetOption36 {(enabled ? 1 : 0)}", ct); 
-            return true; 
+        try
+        {
+            _ = await SendCommandAsync($"SetOption36 {(enabled ? 1 : 0)}", ct);
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetDstAsync] Failed to set DST to {Enabled}", enabled); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetDstAsync] Failed to set DST to {Enabled}", enabled);
+            return false;
         }
     }
 
@@ -504,13 +564,13 @@ public class TasmotaClient : IDisposable
                 PropertyNameCaseInsensitive = true,
                 NumberHandling = JsonNumberHandling.AllowReadingFromString
             };
-            
+
             return JsonSerializer.Deserialize<TasmotaStatus>(s, options);
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[GetStatusAsync] Failed to get device status"); 
-            return null; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[GetStatusAsync] Failed to get device status");
+            return null;
         }
     }
 
@@ -521,15 +581,15 @@ public class TasmotaClient : IDisposable
     /// <summary>Enable/disable mDNS (often SetOption55)</summary>
     public async Task<bool> EnableMdnsAsync(bool enable, CancellationToken ct = default)
     {
-        try 
-        { 
-            _ = await SendCommandAsync($"SetOption55 {(enable ? 1 : 0)}", ct); 
-            return true; 
+        try
+        {
+            _ = await SendCommandAsync($"SetOption55 {(enable ? 1 : 0)}", ct);
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[EnableMdnsAsync] Failed to set mDNS to {Enable}", enable); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[EnableMdnsAsync] Failed to set mDNS to {Enable}", enable);
+            return false;
         }
     }
 
@@ -540,7 +600,7 @@ public class TasmotaClient : IDisposable
         {
             var resp = await SendCommandGetStringAsync("SetOption55", ct);
             if (string.IsNullOrWhiteSpace(resp)) return null;
-            
+
             using var doc = JsonDocument.Parse(resp);
             if (doc.RootElement.TryGetProperty("SetOption55", out var v))
             {
@@ -548,12 +608,13 @@ public class TasmotaClient : IDisposable
                 if (string.Equals(s, "ON", StringComparison.OrdinalIgnoreCase)) return true;
                 if (string.Equals(s, "OFF", StringComparison.OrdinalIgnoreCase)) return false;
             }
+
             return null;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[GetMdnsStateAsync] Failed to get mDNS state"); 
-            return null; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[GetMdnsStateAsync] Failed to get mDNS state");
+            return null;
         }
     }
 
@@ -564,33 +625,39 @@ public class TasmotaClient : IDisposable
     /// <summary>Soft restart</summary>
     public async Task<bool> RestartAsync(CancellationToken ct = default)
     {
-        try 
-        { 
-            _ = await SendCommandAsync("Restart 1", ct); 
-            return true; 
+        try
+        {
+            _ = await SendCommandAsync("Restart 1", ct);
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[RestartAsync] Failed to restart device"); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[RestartAsync] Failed to restart device");
+            return false;
         }
     }
 
-    /// <summary>Factory reset; mode: 1,2,5 (1 basic, 2 keep Wi-Fi/MQTT, 5 safest)</summary>
+    /// <summary>
+    /// Factory reset (1=keep WiFi, 2=reset WiFi, 5=reset WiFi and all settings)
+    /// </summary>
+    /// <param name="mode"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
     public async Task<bool> FactoryResetAsync(int mode, CancellationToken ct = default)
     {
         try
         {
             if (mode is not (1 or 2 or 5))
                 throw new ArgumentOutOfRangeException(nameof(mode), "Reset mode must be 1, 2, or 5.");
-                
+
             _ = await SendCommandAsync($"Reset {mode}", ct);
             return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[FactoryResetAsync] Failed to factory reset with mode {Mode}", mode); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[FactoryResetAsync] Failed to factory reset with mode {Mode}", mode);
+            return false;
         }
     }
 
@@ -605,24 +672,25 @@ public class TasmotaClient : IDisposable
         {
             var url = $"{_rootUrl}/dl";
             LogDebug("Downloading backup from {Url}", url);
-            
+
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
-            using var res = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-            
+            using var res = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct)
+                .ConfigureAwait(false);
+
             if (!res.IsSuccessStatusCode)
             {
                 LogWarning("Backup download failed with {Status}", (int)res.StatusCode);
                 return null;
             }
-            
+
             var bytes = await res.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
             LogInformation("Backup downloaded: {Bytes} bytes", bytes.Length);
             return bytes;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[BackupConfigAsync] Failed to download config backup"); 
-            return null; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[BackupConfigAsync] Failed to download config backup");
+            return null;
         }
     }
 
@@ -636,19 +704,19 @@ public class TasmotaClient : IDisposable
             {
                 { new ByteArrayContent(dmpData), "file", "config.dmp" }
             };
-            
+
             using var res = await Http.PostAsync(url, content, ct).ConfigureAwait(false);
             var ok = res.IsSuccessStatusCode;
-            
-            if (!ok) 
+
+            if (!ok)
                 LogWarning("Restore returned {Status}", (int)res.StatusCode);
-                
+
             return ok;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[RestoreConfigAsync] Failed to restore config backup"); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[RestoreConfigAsync] Failed to restore config backup");
+            return false;
         }
     }
 
@@ -670,35 +738,35 @@ public class TasmotaClient : IDisposable
     {
         try
         {
-            if (!string.IsNullOrWhiteSpace(host))      _ = await SendCommandAsync($"MqttHost {host}", ct);
-            if (port.HasValue)                         _ = await SendCommandAsync($"MqttPort {port.Value}", ct);
-            if (!string.IsNullOrWhiteSpace(user))      _ = await SendCommandAsync($"MqttUser {user}", ct);
-            if (!string.IsNullOrWhiteSpace(password))  _ = await SendCommandAsync($"MqttPassword {password}", ct);
-            if (!string.IsNullOrWhiteSpace(clientId))  _ = await SendCommandAsync($"MqttClient {clientId}", ct);
-            if (!string.IsNullOrWhiteSpace(topic))     _ = await SendCommandAsync($"Topic {topic}", ct);
+            if (!string.IsNullOrWhiteSpace(host)) _ = await SendCommandAsync($"MqttHost {host}", ct);
+            if (port.HasValue) _ = await SendCommandAsync($"MqttPort {port.Value}", ct);
+            if (!string.IsNullOrWhiteSpace(user)) _ = await SendCommandAsync($"MqttUser {user}", ct);
+            if (!string.IsNullOrWhiteSpace(password)) _ = await SendCommandAsync($"MqttPassword {password}", ct);
+            if (!string.IsNullOrWhiteSpace(clientId)) _ = await SendCommandAsync($"MqttClient {clientId}", ct);
+            if (!string.IsNullOrWhiteSpace(topic)) _ = await SendCommandAsync($"Topic {topic}", ct);
             if (!string.IsNullOrWhiteSpace(fullTopic)) _ = await SendCommandAsync($"FullTopic {fullTopic}", ct);
-            if (reconnect)                             _ = await SendCommandAsync("MqttReconnect 1", ct);
-            
+            if (reconnect) _ = await SendCommandAsync("MqttReconnect 1", ct);
+
             return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetMqttAsync] Failed to set MQTT configuration"); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetMqttAsync] Failed to set MQTT configuration");
+            return false;
         }
     }
 
     /// <summary>Read StatusMQT block from Status 0</summary>
     public async Task<StatusMQT?> GetMqttStatusAsync(CancellationToken ct = default)
     {
-        try 
-        { 
-            return (await GetStatusAsync(ct))?.StatusMQT; 
+        try
+        {
+            return (await GetStatusAsync(ct))?.StatusMQT;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[GetMqttStatusAsync] Failed to get MQTT status"); 
-            return null; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[GetMqttStatusAsync] Failed to get MQTT status");
+            return null;
         }
     }
 
@@ -707,7 +775,8 @@ public class TasmotaClient : IDisposable
     #region Wi-Fi
 
     /// <summary>Set SSID/PW (optionally restart)</summary>
-    public async Task<bool> SetWifiCredentialsAsync(string ssid, string password, bool restartAfter = true, CancellationToken ct = default)
+    public async Task<bool> SetWifiCredentialsAsync(string ssid, string password, bool restartAfter = true,
+        CancellationToken ct = default)
     {
         try
         {
@@ -723,10 +792,10 @@ public class TasmotaClient : IDisposable
 
             return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetWifiCredentialsAsync] Failed to set WiFi credentials for SSID {Ssid}", ssid); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetWifiCredentialsAsync] Failed to set WiFi credentials for SSID {Ssid}", ssid);
+            return false;
         }
     }
 
@@ -739,15 +808,16 @@ public class TasmotaClient : IDisposable
             if (st == null) return null;
             return (st.StatusNET, st.StatusSTS?.Wifi);
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[GetWifiInfoAsync] Failed to get WiFi info"); 
-            return null; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[GetWifiInfoAsync] Failed to get WiFi info");
+            return null;
         }
     }
 
     /// <summary>Wi-Fi scan (WifiScan 1 + poll WifiScan)</summary>
-    public async Task<List<WifiScanResult>?> ScanWifiAsync(int timeoutMs = 5000, int pollIntervalMs = 400, CancellationToken ct = default)
+    public async Task<List<WifiScanResult>?> ScanWifiAsync(int timeoutMs = 5000, int pollIntervalMs = 400,
+        CancellationToken ct = default)
     {
         try
         {
@@ -810,7 +880,8 @@ public class TasmotaClient : IDisposable
                     if (ap.TryGetProperty("RSSI", out var pRssi))
                     {
                         if (pRssi.ValueKind == JsonValueKind.Number && pRssi.TryGetInt32(out var rv)) rssiPercent = rv;
-                        else if (pRssi.ValueKind == JsonValueKind.String && int.TryParse(pRssi.GetString(), out var rvs)) rssiPercent = rvs;
+                        else if (pRssi.ValueKind == JsonValueKind.String &&
+                                 int.TryParse(pRssi.GetString(), out var rvs)) rssiPercent = rvs;
                     }
 
                     string? enc = ap.TryGetProperty("Encryption", out var pEnc) ? pEnc.GetString() : null;
@@ -829,12 +900,12 @@ public class TasmotaClient : IDisposable
                 return results;
             }
 
-           return null; // timeout
+            return null; // timeout
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[ScanWifiAsync] Failed to scan WiFi networks"); 
-            return null; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[ScanWifiAsync] Failed to scan WiFi networks");
+            return null;
         }
     }
 
@@ -845,15 +916,15 @@ public class TasmotaClient : IDisposable
     /// <summary>Set LED state mode (0..8)</summary>
     public async Task<bool> SetLedStateAsync(int mode /*0..8*/, CancellationToken ct = default)
     {
-        try 
-        { 
-            _ = await SendCommandAsync($"LedState {mode}", ct); 
-            return true; 
+        try
+        {
+            _ = await SendCommandAsync($"LedState {mode}", ct);
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetLedStateAsync] Failed to set LED state to mode {Mode}", mode); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetLedStateAsync] Failed to set LED state to mode {Mode}", mode);
+            return false;
         }
     }
 
@@ -864,19 +935,19 @@ public class TasmotaClient : IDisposable
         {
             using var doc = await SendCommandAsync($"LedPower{index} {(on ? "ON" : "OFF")}", ct);
             if (doc == null) return null;
-            
+
             var prop = doc.RootElement.EnumerateObject()
                 .FirstOrDefault(p => p.Name.StartsWith($"LedPower{index}", StringComparison.OrdinalIgnoreCase));
-            
+
             if (prop.Value.ValueKind == JsonValueKind.Undefined)
                 return null;
-                
+
             return string.Equals(prop.Value.GetString(), "ON", StringComparison.OrdinalIgnoreCase);
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetLedPowerAsync] Failed to set LED power {Index} to {State}", index, on); 
-            return null; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetLedPowerAsync] Failed to set LED power {Index} to {State}", index, on);
+            return null;
         }
     }
 
@@ -891,34 +962,34 @@ public class TasmotaClient : IDisposable
         {
             var json = await SendCommandGetStringAsync("Status 10", ct);
             if (json is null) return null;
-            
+
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
                 NumberHandling = JsonNumberHandling.AllowReadingFromString
             };
-            
+
             return JsonSerializer.Deserialize<TasmotaSensorStatus>(json, options);
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[GetSensorStatusAsync] Failed to get sensor status"); 
-            return null; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[GetSensorStatusAsync] Failed to get sensor status");
+            return null;
         }
     }
 
     /// <summary>Set telemetry period (seconds)</summary>
     public async Task<bool> SetTelePeriodAsync(int seconds, CancellationToken ct = default)
     {
-        try 
-        { 
-            _ = await SendCommandAsync($"TelePeriod {seconds}", ct); 
-            return true; 
+        try
+        {
+            _ = await SendCommandAsync($"TelePeriod {seconds}", ct);
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetTelePeriodAsync] Failed to set telemetry period to {Seconds} seconds", seconds); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetTelePeriodAsync] Failed to set telemetry period to {Seconds} seconds", seconds);
+            return false;
         }
     }
 
@@ -947,6 +1018,7 @@ public class TasmotaClient : IDisposable
                 };
                 mask[idx] = '1';
             }
+
             return new string(mask);
         }
         catch
@@ -972,22 +1044,23 @@ public class TasmotaClient : IDisposable
     {
         try
         {
-            if (index < 1 || index > 16) 
+            if (index < 1 || index > 16)
                 throw new ArgumentOutOfRangeException(nameof(index), "Timer index must be 1-16");
-                
+
             var daysMask = BuildDaysMask(days?.ToArray() ?? Array.Empty<DayOfWeek>());
             var hhmm = time.ToString("HH\\:mm");
-            var payload = $"{{\"Enable\":1,\"Time\":\"{hhmm}\",\"Window\":{window},\"Days\":\"{daysMask}\",\"Repeat\":{(repeat ? 1 : 0)},\"Output\":{output},\"Action\":{action},\"Mode\":{mode}}}";
-            
+            var payload =
+                $"{{\"Enable\":1,\"Time\":\"{hhmm}\",\"Window\":{window},\"Days\":\"{daysMask}\",\"Repeat\":{(repeat ? 1 : 0)},\"Output\":{output},\"Action\":{action},\"Mode\":{mode}}}";
+
             _ = await SendCommandAsync($"Timer{index} {payload}", ct);
             _ = await SendCommandAsync("Timers 1", ct); // ensure timers subsystem is on
-            
+
             return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetTimerAsync] Failed to set timer {Index}", index); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetTimerAsync] Failed to set timer {Index}", index);
+            return false;
         }
     }
 
@@ -1005,48 +1078,49 @@ public class TasmotaClient : IDisposable
     {
         try
         {
-            if (index < 1 || index > 16) 
+            if (index < 1 || index > 16)
                 throw new ArgumentOutOfRangeException(nameof(index), "Timer index must be 1-16");
-                
-            var payload = $"{{\"Enable\":1,\"Time\":\"{timeHHmm}\",\"Window\":{window},\"Days\":\"{daysMask}\",\"Repeat\":{(repeat ? 1 : 0)},\"Output\":{output},\"Action\":{action},\"Mode\":{mode}}}";
-            
+
+            var payload =
+                $"{{\"Enable\":1,\"Time\":\"{timeHHmm}\",\"Window\":{window},\"Days\":\"{daysMask}\",\"Repeat\":{(repeat ? 1 : 0)},\"Output\":{output},\"Action\":{action},\"Mode\":{mode}}}";
+
             _ = await SendCommandAsync($"Timer{index} {payload}", ct);
             _ = await SendCommandAsync("Timers 1", ct);
-            
+
             return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetTimerByMaskAsync] Failed to set timer {Index} with mask {Mask}", index, daysMask); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetTimerByMaskAsync] Failed to set timer {Index} with mask {Mask}", index, daysMask);
+            return false;
         }
     }
 
     public async Task<bool> EnableAllTimersAsync(bool enable, CancellationToken ct = default)
     {
-        try 
-        { 
-            _ = await SendCommandAsync($"Timers {(enable ? 1 : 0)}", ct); 
-            return true; 
+        try
+        {
+            _ = await SendCommandAsync($"Timers {(enable ? 1 : 0)}", ct);
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[EnableAllTimersAsync] Failed to {Action} all timers", enable ? "enable" : "disable"); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[EnableAllTimersAsync] Failed to {Action} all timers", enable ? "enable" : "disable");
+            return false;
         }
     }
 
     public async Task<bool> DisableTimerAsync(int index, CancellationToken ct = default)
     {
-        try 
-        { 
-            _ = await SendCommandAsync($"Timer{index} 0", ct); 
-            return true; 
+        try
+        {
+            _ = await SendCommandAsync($"Timer{index} 0", ct);
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[DisableTimerAsync] Failed to disable timer {Index}", index); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[DisableTimerAsync] Failed to disable timer {Index}", index);
+            return false;
         }
     }
 
@@ -1059,10 +1133,10 @@ public class TasmotaClient : IDisposable
             _ = await SendCommandAsync($"Timer{index} {{}}", ct);
             return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[ClearTimerAsync] Failed to clear timer {Index}", index); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[ClearTimerAsync] Failed to clear timer {Index}", index);
+            return false;
         }
     }
 
@@ -1074,14 +1148,16 @@ public class TasmotaClient : IDisposable
     {
         try
         {
-            _ = await SendCommandAsync($"Latitude {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}", ct);
-            _ = await SendCommandAsync($"Longitude {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}", ct);
+            _ = await SendCommandAsync(
+                $"Latitude {latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}", ct);
+            _ = await SendCommandAsync(
+                $"Longitude {longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}", ct);
             return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetGeoAsync] Failed to set geo coordinates {Lat},{Lon}", latitude, longitude); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetGeoAsync] Failed to set geo coordinates {Lat},{Lon}", latitude, longitude);
+            return false;
         }
     }
 
@@ -1104,7 +1180,7 @@ public class TasmotaClient : IDisposable
     {
         try
         {
-            if (ruleIndex is < 1 or > 3) 
+            if (ruleIndex is < 1 or > 3)
                 throw new ArgumentOutOfRangeException(nameof(ruleIndex), "Rule index must be 1-3");
 
             string pattern = whenLocal.ToString("-MM-dd'T'HH:mm"); // e.g. -09-05T18:30
@@ -1131,41 +1207,42 @@ public class TasmotaClient : IDisposable
             _ = await SendCommandAsync(auxRuleCmd, ct);
             _ = await SendCommandAsync($"Rule{ruleIndex} 1", ct);
             _ = await SendCommandAsync($"Rule{aux} 1", ct);
-            
+
             return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetOneShotDateRuleAsync] Failed to set one-shot rule {RuleIndex}", ruleIndex); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetOneShotDateRuleAsync] Failed to set one-shot rule {RuleIndex}", ruleIndex);
+            return false;
         }
     }
 
     public async Task<bool> EnableRuleAsync(int ruleIndex, bool enable, CancellationToken ct = default)
     {
-        try 
-        { 
-            _ = await SendCommandAsync($"Rule{ruleIndex} {(enable ? 1 : 0)}", ct); 
-            return true; 
+        try
+        {
+            _ = await SendCommandAsync($"Rule{ruleIndex} {(enable ? 1 : 0)}", ct);
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[EnableRuleAsync] Failed to {Action} rule {RuleIndex}", enable ? "enable" : "disable", ruleIndex); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[EnableRuleAsync] Failed to {Action} rule {RuleIndex}", enable ? "enable" : "disable",
+                ruleIndex);
+            return false;
         }
     }
 
     public async Task<bool> SetRuleScriptAsync(int ruleIndex, string script, CancellationToken ct = default)
     {
-        try 
-        { 
-            _ = await SendCommandAsync($"Rule{ruleIndex} {script}", ct); 
-            return true; 
+        try
+        {
+            _ = await SendCommandAsync($"Rule{ruleIndex} {script}", ct);
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[SetRuleScriptAsync] Failed to set rule {RuleIndex} script", ruleIndex); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetRuleScriptAsync] Failed to set rule {RuleIndex} script", ruleIndex);
+            return false;
         }
     }
 
@@ -1178,25 +1255,26 @@ public class TasmotaClient : IDisposable
             _ = await SendCommandAsync($"Rule{ruleIndex} \"\"", ct);
             return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[ClearRuleAsync] Failed to clear rule {RuleIndex}", ruleIndex); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[ClearRuleAsync] Failed to clear rule {RuleIndex}", ruleIndex);
+            return false;
         }
     }
 
     /// <summary>Start RuleTimerN countdown in seconds (for relative pulse)</summary>
     public async Task<bool> StartRuleTimerAsync(int index, int seconds, CancellationToken ct = default)
     {
-        try 
-        { 
-            _ = await SendCommandAsync($"RuleTimer{index} {seconds}", ct); 
-            return true; 
+        try
+        {
+            _ = await SendCommandAsync($"RuleTimer{index} {seconds}", ct);
+            return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[StartRuleTimerAsync] Failed to start rule timer {Index} for {Seconds} seconds", index, seconds); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[StartRuleTimerAsync] Failed to start rule timer {Index} for {Seconds} seconds", index,
+                seconds);
+            return false;
         }
     }
 
@@ -1217,10 +1295,10 @@ public class TasmotaClient : IDisposable
             var whenLocal = DateTime.Now.Add(delay);
             return await SetOneShotDateRuleAsync(ruleIndex, whenLocal, output, onWhenTrue, pulse, ct);
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[ScheduleOneShotInAsync] Failed to schedule one-shot in {Delay}", delay); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[ScheduleOneShotInAsync] Failed to schedule one-shot in {Delay}", delay);
+            return false;
         }
     }
 
@@ -1249,8 +1327,10 @@ public class TasmotaClient : IDisposable
                 enabled = ruleProp.TryGetProperty("State", out var st) && OnOffToBool(st.GetString());
                 once = ruleProp.TryGetProperty("Once", out var o) && OnOffToBool(o.GetString());
                 stopOnError = ruleProp.TryGetProperty("StopOnError", out var soe) && OnOffToBool(soe.GetString());
-                if (ruleProp.TryGetProperty("Free", out var f) && f.ValueKind == JsonValueKind.Number) free = f.GetInt32();
-                if (ruleProp.TryGetProperty("Length", out var ln) && ln.ValueKind == JsonValueKind.Number) length = ln.GetInt32();
+                if (ruleProp.TryGetProperty("Free", out var f) && f.ValueKind == JsonValueKind.Number)
+                    free = f.GetInt32();
+                if (ruleProp.TryGetProperty("Length", out var ln) && ln.ValueKind == JsonValueKind.Number)
+                    length = ln.GetInt32();
                 if (ruleProp.TryGetProperty("Rules", out var r)) script = r.GetString();
             }
             else
@@ -1259,7 +1339,8 @@ public class TasmotaClient : IDisposable
                 once = root.TryGetProperty("Once", out var o) && OnOffToBool(o.GetString());
                 stopOnError = root.TryGetProperty("StopOnError", out var soe) && OnOffToBool(soe.GetString());
                 if (root.TryGetProperty("Free", out var f) && f.ValueKind == JsonValueKind.Number) free = f.GetInt32();
-                if (root.TryGetProperty("Length", out var ln) && ln.ValueKind == JsonValueKind.Number) length = ln.GetInt32();
+                if (root.TryGetProperty("Length", out var ln) && ln.ValueKind == JsonValueKind.Number)
+                    length = ln.GetInt32();
                 if (root.TryGetProperty("Rules", out var r)) script = r.GetString();
             }
 
@@ -1291,6 +1372,7 @@ public class TasmotaClient : IDisposable
                 var ri = await GetRuleInfoAsync(i, ct);
                 if (ri != null) list.Add(ri);
             }
+
             return list;
         }
         catch (Exception ex)
@@ -1301,13 +1383,15 @@ public class TasmotaClient : IDisposable
     }
 
     /// <summary>Disable + clear script (alias of ClearRuleAsync)</summary>
-    public async Task<bool> DeleteRuleAsync(int ruleIndex, CancellationToken ct = default) => await ClearRuleAsync(ruleIndex, ct);
+    public async Task<bool> DeleteRuleAsync(int ruleIndex, CancellationToken ct = default) =>
+        await ClearRuleAsync(ruleIndex, ct);
 
     /// <summary>
     /// Relative pulse in one call: after startDelaySeconds -> ON, after pulseSeconds -> OFF.
     /// Uses RuleTimer + Rules#Timer event.
     /// </summary>
-    public async Task<bool> PulseAfterAsync(int startDelaySeconds, int output, int pulseSeconds, int ruleIndex = 1, int timerIndex = 1, CancellationToken ct = default)
+    public async Task<bool> PulseAfterAsync(int startDelaySeconds, int output, int pulseSeconds, int ruleIndex = 1,
+        int timerIndex = 1, CancellationToken ct = default)
     {
         try
         {
@@ -1318,10 +1402,10 @@ public class TasmotaClient : IDisposable
             _ = await StartRuleTimerAsync(timerIndex, startDelaySeconds, ct);
             return true;
         }
-        catch (Exception ex) 
-        { 
-            LogError(ex, "[PulseAfterAsync] Failed to set pulse after {StartDelay}s", startDelaySeconds); 
-            return false; 
+        catch (Exception ex)
+        {
+            LogError(ex, "[PulseAfterAsync] Failed to set pulse after {StartDelay}s", startDelaySeconds);
+            return false;
         }
     }
 
@@ -1329,7 +1413,8 @@ public class TasmotaClient : IDisposable
 
     #region Simple rule model + builder (high-level API)
 
-    private static string BuildBacklogPulse(int output, bool onWhenTrue, int? pulseSeconds, bool autoDisable, int ruleIndex)
+    private static string BuildBacklogPulse(int output, bool onWhenTrue, int? pulseSeconds, bool autoDisable,
+        int ruleIndex)
     {
         try
         {
@@ -1367,7 +1452,8 @@ public class TasmotaClient : IDisposable
                     string pattern = when.ToString("-MM-dd'T'HH':'mm"); // "-09-05T18:30"
                     int minuteOfDay = when.Hour * 60 + when.Minute;
 
-                    var action = BuildBacklogPulse(s.Output, s.OnWhenTrue, (int?)s.Pulse?.TotalSeconds, s.AutoDisable, ruleIndex);
+                    var action = BuildBacklogPulse(s.Output, s.OnWhenTrue, (int?)s.Pulse?.TotalSeconds, s.AutoDisable,
+                        ruleIndex);
 
                     string ruleA = $"on StatusTIM#Local$|{pattern} do {action} endon";
                     string ruleB = $"on Time#Minute={minuteOfDay} do Status 7 endon";
@@ -1387,7 +1473,8 @@ public class TasmotaClient : IDisposable
                 {
                     if (s.UseSunset is null) throw new ArgumentException("UseSunset is required.");
                     var baseEvent = s.UseSunset.Value ? "Sunset" : "Sunrise";
-                    var action = BuildBacklogPulse(s.Output, s.OnWhenTrue, (int?)s.Pulse?.TotalSeconds, s.AutoDisable, ruleIndex);
+                    var action = BuildBacklogPulse(s.Output, s.OnWhenTrue, (int?)s.Pulse?.TotalSeconds, s.AutoDisable,
+                        ruleIndex);
 
                     if (s.OffsetMinutes is int off && off != 0)
                     {
@@ -1414,7 +1501,8 @@ public class TasmotaClient : IDisposable
     }
 
     /// <summary>Compile and apply SimpleRule; writes RuleN (and helper) and enables them.</summary>
-    public async Task<bool> ApplySimpleRuleAsync(int ruleIndex, SimpleRule rule, int timerIndexForRelative = 1, CancellationToken ct = default)
+    public async Task<bool> ApplySimpleRuleAsync(int ruleIndex, SimpleRule rule, int timerIndexForRelative = 1,
+        CancellationToken ct = default)
     {
         try
         {
@@ -1462,7 +1550,7 @@ public class TasmotaClient : IDisposable
                 {
                     var now = DateTime.Now;
                     var target = new DateTime(now.Year, int.Parse(m.Groups[1].Value), int.Parse(m.Groups[2].Value),
-                                              int.Parse(m.Groups[3].Value), int.Parse(m.Groups[4].Value), 0);
+                        int.Parse(m.Groups[3].Value), int.Parse(m.Groups[4].Value), 0);
                     var mPower = System.Text.RegularExpressions.Regex.Match(script, @"Power(\d)\s+([01])");
                     int output = mPower.Success ? int.Parse(mPower.Groups[1].Value) : 1;
                     bool onTrue = mPower.Success ? (mPower.Groups[2].Value == "1") : true;
@@ -1564,7 +1652,8 @@ public class TasmotaClient : IDisposable
             if (outputs is null) throw new ArgumentNullException(nameof(outputs));
             var outs = outputs.ToArray();
             if (outs.Length == 0) throw new ArgumentException("At least one relay is required.", nameof(outputs));
-            if (outs.Any(o => o < 1 || o > 8)) throw new ArgumentOutOfRangeException(nameof(outputs), "Relay IDs must be 1..8.");
+            if (outs.Any(o => o < 1 || o > 8))
+                throw new ArgumentOutOfRangeException(nameof(outputs), "Relay IDs must be 1..8.");
 
             static int MinuteOfDay(string hhmm)
             {
@@ -1578,7 +1667,8 @@ public class TasmotaClient : IDisposable
             {
                 int need = outs.Length * 2;
                 if (startTimerIndex < 1 || startTimerIndex + need - 1 > 16)
-                    throw new InvalidOperationException($"Not enough timer slots. start={startTimerIndex}, need={need}, limit=16.");
+                    throw new InvalidOperationException(
+                        $"Not enough timer slots. start={startTimerIndex}, need={need}, limit=16.");
 
                 var daysArr = days?.ToArray() ?? Array.Empty<DayOfWeek>();
 
@@ -1591,7 +1681,7 @@ public class TasmotaClient : IDisposable
                         daysMask: BuildDaysMask(daysArr),
                         timeHHmm: onTimeHHmm,
                         output: o,
-                        action: 1,   // ON
+                        action: 1, // ON
                         ct: ct
                     );
                     if (!ok1) return false;
@@ -1602,7 +1692,7 @@ public class TasmotaClient : IDisposable
                         daysMask: BuildDaysMask(daysArr),
                         timeHHmm: offTimeHHmm,
                         output: o,
-                        action: 0,   // OFF
+                        action: 0, // OFF
                         ct: ct
                     );
                     if (!ok2) return false;
@@ -1613,13 +1703,14 @@ public class TasmotaClient : IDisposable
             }
             else // RuleBacklog
             {
-                if (ruleIndex is < 1 or > 3) throw new ArgumentOutOfRangeException(nameof(ruleIndex), "Rule index must be 1..3.");
+                if (ruleIndex is < 1 or > 3)
+                    throw new ArgumentOutOfRangeException(nameof(ruleIndex), "Rule index must be 1..3.");
 
-                int onMinute  = MinuteOfDay(onTimeHHmm);
+                int onMinute = MinuteOfDay(onTimeHHmm);
                 int offMinute = MinuteOfDay(offTimeHHmm);
 
                 // NOTE: Day-specific rule masking is complex; for strict day control prefer Timers strategy.
-                string onBacklog  = string.Join("; ", outs.Select(o => $"Power{o} ON"));
+                string onBacklog = string.Join("; ", outs.Select(o => $"Power{o} ON"));
                 string offBacklog = string.Join("; ", outs.Select(o => $"Power{o} OFF"));
 
                 string ruleScript =
@@ -1638,7 +1729,12 @@ public class TasmotaClient : IDisposable
     }
 
     #endregion
-    
+
+    /// <summary>
+    /// Get the number of relays (POWERx) supported by the device.
+    /// </summary>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     public async Task<int?> GetRelayCountAsync(CancellationToken ct = default)
     {
         try
@@ -1666,6 +1762,112 @@ public class TasmotaClient : IDisposable
         {
             LogError(ex, "[GetRelayCountAsync] Failed to get relay count");
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Only for multi-relay devices: Set multiple relays to the same state sequentially with a delay between each.
+    /// </summary>
+    /// <param name="relays"></param>
+    /// <param name="state"></param>
+    /// <param name="delayMs"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    public async Task<bool> SetRelaysSequentialAsync(IEnumerable<int> relays, bool state, int delayMs = 100,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var commands = new List<string>();
+            var delayDeciseconds = Math.Max(1, delayMs / 100); // minimum 1 decisecond
+
+            bool first = true;
+            foreach (var relay in relays)
+            {
+                if (!first)
+                    commands.Add($"Delay {delayDeciseconds}");
+
+                commands.Add($"Power{relay} {(state ? "ON" : "OFF")}");
+                first = false;
+            }
+
+            var backlogCommand = $"Backlog {string.Join("; ", commands)}";
+            _ = await SendCommandAsync(backlogCommand, ct);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetRelaysSequentialAsync] Failed to set relays sequentially");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Set all relays to the same state.
+    /// </summary>
+    /// <param name="state"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    public async Task<bool> SetAllRelaysAsync(bool state, CancellationToken ct = default)
+    {
+        try
+        {
+            _ = await SendCommandAsync($"Power0 {(state ? "ON" : "OFF")}", ct);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetAllRelaysAsync] Failed to set all relays to {State}", state);
+            return false;
+        }
+    }
+
+
+    /// <summary>
+    /// Set multiple relays to the same state using Backlog command.
+    /// </summary>
+    /// <param name="relays"></param>
+    /// <param name="state"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    public async Task<bool> SetRelayGroupAsync(IEnumerable<int> relays, bool state, CancellationToken ct = default)
+    {
+        try
+        {
+            var commands = relays.Select(r => $"Power{r} {(state ? "ON" : "OFF")}");
+            var backlogCommand = $"Backlog {string.Join("; ", commands)}";
+
+            _ = await SendCommandAsync(backlogCommand, ct);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetRelayGroupAsync] Failed to set relay group");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Set multiple relays to individual states using Backlog command.
+    /// Example: relayStates = { {1, true}, {2, false}, {3, true} }
+    /// </summary>
+    /// <param name="relayStates"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    public async Task<bool> SetMultipleRelaysAsync(Dictionary<int, bool> relayStates, CancellationToken ct = default)
+    {
+        try
+        {
+            var commands = relayStates.Select(kvp => $"Power{kvp.Key} {(kvp.Value ? "ON" : "OFF")}");
+            var backlogCommand = $"Backlog {string.Join("; ", commands)}";
+
+            _ = await SendCommandAsync(backlogCommand, ct);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            LogError(ex, "[SetMultipleRelaysAsync] Failed to set multiple relays");
+            return false;
         }
     }
 

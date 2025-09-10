@@ -35,6 +35,15 @@ var client = new TasmotaClient("10.0.4.41");
 await client.SetRelayAsync(1, true);      // Turn relay 1 ON
 bool? isOn = await client.GetRelayStateAsync(1);
 
+// Multi-relay control (NEW!)
+await client.SetMultipleRelaysAsync(new Dictionary<int, bool> {
+    { 1, true }, { 2, false }, { 3, true }  // Set different states per relay
+});
+
+await client.SetRelayGroupAsync(new[] { 1, 2, 3 }, true);   // Set multiple relays to same state
+await client.SetAllRelaysAsync(false);                      // Turn OFF all relays
+await client.SetRelaysSequentialAsync(new[] { 1, 2, 3, 4 }, true, 200); // Sequential ON with 200ms delay
+
 // Get total relay count
 int? relayCount = await client.GetRelayCountAsync();
 
@@ -94,6 +103,7 @@ await client.RestartAsync();
 ## Feature highlights
 
 * **Relays:** `SetRelayAsync`, `ToggleRelayAsync`, `GetRelayStateAsync`, `GetRelayCountAsync`
+* **Multi-Relay Control:** `SetMultipleRelaysAsync`, `SetRelayGroupAsync`, `SetAllRelaysAsync`, `SetRelaysSequentialAsync`
 * **Time/Timezone/DST:** `GetTimeAsync`, `SetTimeAsync`, `SetTimezoneAsync`, `SetDstAsync`
 * **Status/Sensors:** `GetStatusAsync`, `GetSensorStatusAsync`, `SetTelePeriodAsync`
 * **Wi-Fi:** `SetWifiCredentialsAsync`, `GetWifiInfoAsync`, `ScanWifiAsync`
@@ -101,10 +111,10 @@ await client.RestartAsync();
 * **MQTT:** `SetMqttAsync`, `GetMqttStatusAsync`
 * **Scheduling**
 
-  * **Timers (weekly):** `SetTimerAsync`, `SetTimerByMaskAsync`, `EnableAllTimersAsync`, `DisableTimerAsync`, `ClearTimerAsync`
-  * **Rules:** `SetOneShotDateRuleAsync`, `ScheduleOneShotInAsync`, `PulseAfterAsync`, `SetRuleScriptAsync`, `EnableRuleAsync`, `GetRuleInfoAsync`, `GetAllRulesAsync`, `ClearRuleAsync`, `DeleteRuleAsync`
-  * **Multi-relay orchestration:** `SetTimerMultiAsync`
-  * **SimpleRule model:** `ApplySimpleRuleAsync`, `GetSimpleRuleAsync`
+    * **Timers (weekly):** `SetTimerAsync`, `SetTimerByMaskAsync`, `EnableAllTimersAsync`, `DisableTimerAsync`, `ClearTimerAsync`
+    * **Rules:** `SetOneShotDateRuleAsync`, `ScheduleOneShotInAsync`, `PulseAfterAsync`, `SetRuleScriptAsync`, `EnableRuleAsync`, `GetRuleInfoAsync`, `GetAllRulesAsync`, `ClearRuleAsync`, `DeleteRuleAsync`
+    * **Multi-relay orchestration:** `SetTimerMultiAsync`
+    * **SimpleRule model:** `ApplySimpleRuleAsync`, `GetSimpleRuleAsync`
 * **Geo:** `SetGeoAsync` (for Sunrise/Sunset rules)
 * **LED:** `SetLedStateAsync`, `SetLedPowerAsync`
 * **mDNS:** `EnableMdnsAsync`, `GetMdnsStateAsync`
@@ -115,7 +125,74 @@ await client.RestartAsync();
 
 ## Real-world use cases
 
-### 1) Check relay count and toggle states
+### 1) Multi-relay control strategies (NEW!)
+
+```csharp
+// Set multiple relays to different states in one command
+var relayStates = new Dictionary<int, bool> 
+{
+    { 1, true },   // Relay 1 ON
+    { 2, false },  // Relay 2 OFF
+    { 3, true },   // Relay 3 ON
+    { 4, true }    // Relay 4 ON
+};
+await client.SetMultipleRelaysAsync(relayStates);
+
+// Turn specific relays ON together
+await client.SetRelayGroupAsync(new[] { 1, 3, 5 }, true);
+
+// Emergency shutdown - turn all relays OFF
+await client.SetAllRelaysAsync(false);
+
+// Sequential startup with delay (e.g., motor startup sequence)
+await client.SetRelaysSequentialAsync(new[] { 1, 2, 3, 4 }, true, 500); // 500ms delay between each
+
+// Staggered shutdown
+await client.SetRelaysSequentialAsync(new[] { 4, 3, 2, 1 }, false, 300); // Reverse order
+```
+
+### 2) Smart home automation scenarios
+
+```csharp
+// Morning routine: gradually turn on different areas
+await client.SetRelaysSequentialAsync(new[] { 1, 2, 3 }, true, 1000); // 1 second between each
+
+// Evening shutdown: turn off non-essential devices first, then security
+await client.SetRelayGroupAsync(new[] { 2, 3, 4 }, false);  // Turn off lights/appliances
+await Task.Delay(2000);
+await client.SetRelayAsync(1, false);  // Turn off main power last
+
+// Scene control: living room movie mode
+await client.SetMultipleRelaysAsync(new Dictionary<int, bool> {
+    { 1, false },  // Main lights OFF
+    { 2, true },   // Ambient lights ON
+    { 3, true },   // TV and sound system ON
+    { 4, false }   // AC reduced
+});
+```
+
+### 3) Industrial control patterns
+
+```csharp
+// Motor startup sequence with safety delays
+await client.SetRelayAsync(1, true);      // Enable safety systems first
+await Task.Delay(2000);
+await client.SetRelaysSequentialAsync(new[] { 2, 3, 4 }, true, 1500); // Start motors with delay
+
+// Emergency stop - immediate shutdown of all operational relays
+await client.SetRelayGroupAsync(new[] { 2, 3, 4, 5, 6 }, false);
+
+// Production line control
+var productionRelays = new Dictionary<int, bool> {
+    { 1, true },   // Conveyor belt
+    { 2, true },   // Processing unit
+    { 3, false },  // Quality control (manual mode)
+    { 4, true }    // Packaging unit
+};
+await client.SetMultipleRelaysAsync(productionRelays);
+```
+
+### 4) Check relay count and toggle states
 
 ```csharp
 // Discover how many relays the device has
@@ -130,7 +207,7 @@ for (int i = 1; i <= relayCount; i++)
 }
 ```
 
-### 2) Weekdays 08:30–20:15 ON/OFF for relays 1–4
+### 5) Weekdays 08:30–20:15 ON/OFF for relays 1–4
 
 ```csharp
 await client.SetTimerMultiAsync(
@@ -143,7 +220,7 @@ await client.SetTimerMultiAsync(
 );
 ```
 
-### 3) Turn ON 15 minutes after sunset for 5 minutes
+### 6) Turn ON 15 minutes after sunset for 5 minutes
 
 ```csharp
 await client.SetGeoAsync(41.0082, 28.9784); // Istanbul coordinates
@@ -159,14 +236,14 @@ var rule = new SimpleRule {
 await client.ApplySimpleRuleAsync(1, rule);
 ```
 
-### 4) Fire a short pulse after 30 seconds
+### 7) Fire a short pulse after 30 seconds
 
 ```csharp
 // Turn relay 1 ON after 30 seconds, then OFF after 5 more seconds
 await client.PulseAfterAsync(30, 1, 5);
 ```
 
-### 5) Wi-Fi management and scanning
+### 8) Wi-Fi management and scanning
 
 ```csharp
 // Scan for available networks
@@ -186,7 +263,7 @@ await client.SetAccessPointCredentialsAsync("MyTasmota", "password123");
 await client.SetWifiRecoveryModeAsync(WifiRecoveryMode.SmartConfig);
 ```
 
-### 6) MQTT setup and monitoring
+### 9) MQTT setup and monitoring
 
 ```csharp
 await client.SetMqttAsync("10.0.4.10", 1883, "user", "pass", "client01", "tasmota/dev01");
@@ -194,7 +271,7 @@ var mqtt = await client.GetMqttStatusAsync();
 Console.WriteLine($"MQTT Connected: {mqtt?.MqttHost}, Count: {mqtt?.MqttCount}");
 ```
 
-### 7) Configuration backup and restore
+### 10) Configuration backup and restore
 
 ```csharp
 // Create a backup
@@ -207,7 +284,7 @@ var success = await client.RestoreConfigAsync(backupData);
 Console.WriteLine($"Restore {(success ? "successful" : "failed")}");
 ```
 
-### 8) LED control and indication
+### 11) LED control and indication
 
 ```csharp
 // Set LED to follow relay state
@@ -226,7 +303,7 @@ for (int i = 0; i < 5; i++)
 }
 ```
 
-### 9) Time synchronization and timezone management
+### 12) Time synchronization and timezone management
 
 ```csharp
 // Set timezone and disable DST
@@ -241,7 +318,7 @@ var deviceTime = await client.GetTimeAsync();
 Console.WriteLine($"Device time: {deviceTime}");
 ```
 
-### 10) Complex scheduling with multiple strategies
+### 13) Complex scheduling with multiple strategies
 
 ```csharp
 // Office hours schedule using timers (best for day-specific control)
@@ -264,7 +341,7 @@ await client.SetTimerMultiAsync(
 );
 ```
 
-### 11) Sensor monitoring and telemetry
+### 14) Sensor monitoring and telemetry
 
 ```csharp
 // Read sensor data (requires sensors build)
@@ -280,7 +357,7 @@ if (sensors?.StatusSNS?.DS3231 != null)
 await client.SetTelePeriodAsync(30);
 ```
 
-### 12) System maintenance and diagnostics
+### 15) System maintenance and diagnostics
 
 ```csharp
 // Enable mDNS for easier discovery
@@ -434,6 +511,8 @@ await client.SetWifiRecoveryModeAsync(WifiRecoveryMode.SmartConfig);    // Enabl
 * **Rules:** only Rule1–Rule3. Helpers may consume 2 rules.
 * **Day masks:** timers manage days better than rules.
 * **Relay detection:** Use `GetRelayCountAsync()` to auto-discover device capabilities.
+* **Multi-relay control:** `SetMultipleRelaysAsync()` allows different states per relay, while `SetRelayGroupAsync()` sets the same state for multiple relays.
+* **Sequential control:** `SetRelaysSequentialAsync()` is useful for motor startup sequences or gradual lighting control.
 * **Wi-Fi modes:** Different devices support different Wi-Fi recovery strategies.
 * Wi-Fi scan may require polling (status: `"Scanning"`).
 * Class owns its `HttpClient`. Use `IHttpClientFactory` for many devices.
@@ -449,6 +528,7 @@ MIT. Use freely in your projects. Attribution appreciated 💚
 
 ## Changelog
 
+* **v1.0.4:** Added multi-relay batch control methods: `SetMultipleRelaysAsync()`, `SetRelayGroupAsync()`, `SetAllRelaysAsync()`, `SetRelaysSequentialAsync()`. Enhanced documentation with industrial and smart home automation examples.
 * **v1.0.3:** Added `GetRelayCountAsync()`, Wi-Fi Access Point management (`SetAccessPointModeAsync`, `SetAccessPointCredentialsAsync`), Wi-Fi mode detection (`GetWifiModeAsync`), Wi-Fi recovery mode configuration (`SetWifiRecoveryModeAsync`), improved error handling and logging.
 * **v1.0.2:** Enhanced multi-relay scheduling, improved Wi-Fi scan reliability, better JSON parsing.
 * **v1.0.1:** Added SimpleRule model, sunrise/sunset support, improved timer management.
